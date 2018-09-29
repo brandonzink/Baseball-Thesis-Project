@@ -16,6 +16,7 @@ class player_stats:
     HRper = 5 #Homerun percentage (of hits)
     SBper = 6 #Stolen base percentage (given a hit)
     CSper = 7 #Caught stealing percentage
+    wOBA = 8
 
 #Reads a .csv into a pandas dataframe, flips it vertically (so newer games are at the top),
 #And removes the % signs from BB% and K% and turns them into a 0.00 style percentage instead of a
@@ -33,12 +34,12 @@ def weight_calculator(game_number):
 
 #Returns a numpy array of fully adjusted statistics given the sample size (games), weighted based on recency. The format
 #of the array is as follows:
-#[BA, BB%, K%, 2B%, 3B%, HR%, SB%, CS%]
+#[BA, BB%, K%, 2B%, 3B%, HR%, SB%, CS%, wOBA]
 def calc_true_stats(data):
     
     #Data holders
-    true_stats = np.zeros((8, 1))  #The final array to be returned
-    true_stats_temp = np.zeros((8, 1)) #A placeholder array used for temporary data storage
+    true_stats = np.zeros((9, 1))  #The final array to be returned
+    true_stats_temp = np.zeros((9, 1)) #A placeholder array used for temporary data storage
     true_stats_PA = 0. #The number of weighted PA, used to divide the temp data storage by
 
     num_rows = len(data.index) #The number of rows in the dataframe
@@ -75,6 +76,9 @@ def calc_true_stats(data):
     true_stats[player_stats.SBper] = true_stats_temp[player_stats.SBper]/(true_stats_temp[player_stats.BA]-(true_stats_temp[player_stats.DoublePer]+true_stats_temp[player_stats.TriplePer]+true_stats_temp[player_stats.HRper])) #SB%, SB/(H-(2B+3B+HR))
     true_stats[player_stats.CSper] = true_stats_temp[player_stats.CSper]/true_stats_temp[player_stats.SBper] #CS%, CS/SB
 
+    ##DOUBLE CHECK THIS WOBA CALCULATION, ADJUST THE ONE BELOW TOO
+    true_stats[player_stats.wOBA] = (((true_stats[player_stats.BA]-(true_stats[player_stats.DoublePer]+true_stats[player_stats.TriplePer]+true_stats[player_stats.HRper]))*0.888)+(true_stats[player_stats.BBper]*0.69)+((true_stats[player_stats.DoublePer]*true_stats[player_stats.BA])*1.271)+((true_stats[player_stats.TriplePer]*true_stats[player_stats.BA])*1.616)+((true_stats[player_stats.HRper]*true_stats[player_stats.BA])*1.616))
+
     #Check for NaN numbers, change to 0
     for i in range(0,8):
         if np.isnan(true_stats[i]):
@@ -93,12 +97,16 @@ def calc_true_stats(data):
         print("uaHR%: ", true_stats[5])
         print("uaSB%: ", true_stats[6])
         print("uaCS%: ", true_stats[7])
+        print("uawOBA: ", true_stats[8])
         print("----------------")
         print("")
 
     #Adjust for the number of games in the sample size
     for i in range(0,8):
         true_stats[i] = ((max_index/500)*true_stats[i])+((1-(max_index/500))*MLB_averages[i])
+
+    true_stats[player_stats.wOBA] = (((true_stats_temp[player_stats.BA]-(true_stats_temp[player_stats.DoublePer]+true_stats_temp[player_stats.TriplePer]+true_stats_temp[player_stats.HRper]))*0.888)+(true_stats[player_stats.BBper]*0.69)+(true_stats[player_stats.DoublePer]*true_stats[player_stats.BA]*1.271)+(true_stats[player_stats.TriplePer]*true_stats[player_stats.BA]*1.616)+(true_stats[player_stats.HRper]*true_stats[player_stats.BA]*1.616))
+
 
     #Prints out the adjusted (for number of games) statistics if debug mode is on
     if debug == True:
@@ -113,6 +121,7 @@ def calc_true_stats(data):
         print("aHR%: ", true_stats[5])
         print("aSB%: ", true_stats[6])
         print("aCS%: ", true_stats[7])
+        print("awOBA: ", true_stats[8])
         print("----------------")
 
     #Return the array with the fully adjusted stats
