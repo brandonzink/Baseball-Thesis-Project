@@ -12,6 +12,7 @@ class player_stats:
     BBper = 1 #Walk percentaage
     Kper = 2 #Strikeout percentage
     HRper = 3 #Homerun percentage (of hits)
+    FIP = 4
 
 # Calculates the weight of the stats for a given game using an exponential method that
 # weights more recent games higher than older games, maxing at the number of games as an input
@@ -25,7 +26,7 @@ def read_data(filepath):
 
 #Returns a numpy array of fully adjusted statistics given the sample size (games), weighted based on recency. The format
 #of the array is as follows:
-#[H%, BB%, K%, HR%]
+#[H%, BB%, K%, HR%, FIP]
 def calc_true_stats(data, pitcher_type):
 
     if(pitcher_type == 'S'):
@@ -36,8 +37,8 @@ def calc_true_stats(data, pitcher_type):
         print("Invalid pitcher type")
         return
 
-    true_stats = np.zeros((4, 1))  #The final array to be returned
-    true_stats_temp = np.zeros((4, 1)) #A placeholder array used for temporary data storage
+    true_stats = np.zeros((5, 1))  #The final array to be returned
+    true_stats_temp = np.zeros((5, 1)) #A placeholder array used for temporary data storage
     true_stats_PA = 0. #The number of weighted PA, used to divide the temp data storage by
 
     num_rows = len(data.index) #The number of rows in the dataframe
@@ -65,6 +66,7 @@ def calc_true_stats(data, pitcher_type):
     true_stats[player_stats.BBper] = true_stats_temp[player_stats.BBper]/true_stats_PA #BB%, BB/PA
     true_stats[player_stats.Kper] = true_stats_temp[player_stats.Kper]/true_stats_PA #K%, K/PA
     true_stats[player_stats.HRper] = true_stats_temp[player_stats.HRper]/true_stats_temp[player_stats.Hper] #HR%, HR/H
+    true_stats[player_stats.FIP] = (((13*(true_stats[player_stats.HRper])*true_stats[player_stats.Hper]))+(3*true_stats[player_stats.BBper])-(2*true_stats[player_stats.Kper]))+3.2
 
     #Check for NaN numbers, change to 0
     for i in range(0,3):
@@ -80,12 +82,15 @@ def calc_true_stats(data, pitcher_type):
         print("uaBB%: ", true_stats[1])
         print("uaK%: ", true_stats[2])
         print("uaHR%: ", true_stats[3])
+        print("uaFIP: ", true_stats[4])
         print("----------------")
         print("")
 
     #Adjust for the number of games in the sample size
     for i in range(0,3):
         true_stats[i] = ((max_index/max_games)*true_stats[i])+((1-(max_index/max_games))*MLB_averages[i])
+
+    true_stats[player_stats.FIP] = (((13*(true_stats[player_stats.HRper])*true_stats[player_stats.Hper]))+(3*true_stats[player_stats.BBper])-(2*true_stats[player_stats.Kper]))+3.2
 
     #Prints out the adjusted (for number of games) statistics if debug mode is on
     if debug == True:
@@ -96,6 +101,7 @@ def calc_true_stats(data, pitcher_type):
         print("aBB%: ", true_stats[1])
         print("aK%: ", true_stats[2])
         print("aHR%: ", true_stats[3])
+        print("aFIP: ", true_stats[4])
         print("----------------")
         print("")
 
