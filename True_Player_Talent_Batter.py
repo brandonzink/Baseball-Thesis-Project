@@ -43,7 +43,7 @@ def calc_true_stats(data):
 
     num_rows = len(data.index) #The number of rows in the dataframe
 
-    max_index = min(500, num_rows) #The number of games, wil max out at 500
+    max_index = min(500, num_rows) #The number of games, will max out at 500
 
     #Loop through the data and calculate the weighted raw statistics using the weight_calulator function
     for index, row in data.iterrows():
