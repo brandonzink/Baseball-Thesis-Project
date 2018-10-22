@@ -30,7 +30,7 @@ def read_data(filepath):
 # Calculates the weight of the stats for a given game using an exponential method that
 # weights more recent games higher than older games, maxing at 500 games
 def weight_calculator(game_number):
-    return (((4**(1./500.))**((game_number*-1.)+500))-1)
+    return (((9**(1./500.))**((game_number*-1.)+500))-1)
 
 #Returns a numpy array of fully adjusted statistics given the sample size (games), weighted based on recency. The format
 #of the array is as follows:
@@ -127,7 +127,7 @@ def calc_true_stats(data):
     #Return the array with the fully adjusted stats
     return true_stats
 
-test_stats = read_data("Data/NelsonCruzGameLog.csv")
+test_stats = read_data("Data/ChristianYelichGameLog.csv")
 calc_true_stats(test_stats)
 
 
