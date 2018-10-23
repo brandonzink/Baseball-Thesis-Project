@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
+import os
 
 #The debug mode varaible
 debug = True
@@ -36,10 +37,11 @@ class pitcher:
 def weight_calculator(game_number, max_games):
     return (((4**(1./max_games))**((game_number*-1.)+max_games))-1)
 
-#Reads a .csv into a pandas dataframe, flips it vertically (so newer games are at the top)
+#Reads a .csv into a pandas dataframe, delete the "Totals" row, sort so newest first, reindex
 def read_data(filepath):
     data = pd.read_csv(filepath)
-    data = data.reindex(index=data.index[::-1])
+    data = data[~data['Date'].astype(str).str.startswith('T')]
+    data = data.sort_values(by='Date', ascending=False)
     data = data.reset_index(drop=True)
     return data
 
@@ -75,13 +77,13 @@ def calc_stats(data):
 
     max_index = min(max_games, num_rows) #The number of games, will max out at 50
 
-    #If test_mode (for testing the weighting function) is on, run it on the first five rows
+    #If test_mode (for testing the weighting function) is on, run it on the most recent three games (two weeks)
     if test_mode == True:
         recent_stats = np.zeros((13,1))
 
-        #Loop through the data and calculate the weighted raw statistics using the weight_calulator function for the most recent 5 games
+        #Loop through the data and calculate the weighted raw statistics using the weight_calulator function for the most recent 3 games
         for index, row in data.iterrows():
-            if index <= 5: #Only consider the most recent 5 games to compare the rest of the data to
+            if index < 3: #Only consider the most recent 3 games to compare the rest of the data to
 
                 #Calculate the raw stats for the last 5 games
                 recent_stats[pitcher.BF] += row['TBF']
@@ -101,10 +103,10 @@ def calc_stats(data):
         recent_stats[pitcher.BBper] = recent_stats[pitcher.BB]/recent_stats[pitcher.BF]
 
         if debug == True:
-            print_array(recent_stats, "Most Recent 5 Games")
+            print_array(recent_stats, "Most Recent 3 Games")
 
         #Delete the most recent 5 games, reset the index, recalculate the size statistics
-        data = data.iloc[5:]
+        data = data.iloc[3:]
         data = data.reset_index(drop=True)
         num_rows = len(data.index) #The number of rows in the dataframe, reinstanced after the change in size
         max_index = min(max_games, num_rows) #The number of games, will max out at 50, reinstanced after the change in size
@@ -138,4 +140,15 @@ def calc_stats(data):
     if debug == True:
         print_array(recent_stats, "Overall Stats")
 
-calc_stats(read_data("Data/JamesPaxtonGameLog.csv"))
+#Run the program on a given file
+def run(filename):
+    print("Running on", filename)
+    calc_stats(read_data(filename))
+
+#Loop through all of the pitcher files in the \Data\Pitchers dir
+def main():
+    for root, dirs, files in os.walk(os.getcwd()+'\Data\Pitchers'):
+       for fname in files:
+           run('Data\Pitchers\\' + fname)
+
+main()

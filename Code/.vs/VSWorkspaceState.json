@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Data"
+    "\\Data",
+    "\\Data\\Pitchers"
   ],
   "SelectedNode": "\\Pitcher_Statistic_Model.py",
   "PreviewInSolutionExplorer": false
