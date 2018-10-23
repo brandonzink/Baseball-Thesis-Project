@@ -15,7 +15,7 @@ pitcher_averages = [0.248, 0.318, 0.034, 0.223, 0.085]
 #This class is used to keep track of the data in the arrays
 class pitcher:
 
-    #The following are used directly for OOTP ratings
+    #The following are used for other ratings
     BF = 0 #Batters faced
     AB = 1 #At-bats
     IP = 2 #Innings Pitched
@@ -47,7 +47,6 @@ def read_data(filepath):
 
 #Used for debug reasons to print the stat arrays
 def print_array(array, title):
-    print ("\n")
     print("###############")
     print(title, "\n")
     print("BF: ", array[pitcher.BF])
@@ -118,27 +117,27 @@ def calc_stats(data):
             weight = weight_calculator(index, max_games)
 
             #Calculate the raw stats for the last 50 games or less (if not enough data)
-            recent_stats[pitcher.BF] += row['TBF']*weight
-            recent_stats[pitcher.IP] += row['IP']*weight
-            recent_stats[pitcher.HA] += row['H']*weight
-            recent_stats[pitcher.HRA] += row['HR']*weight
-            recent_stats[pitcher.BB] += row['BB']*weight
-            recent_stats[pitcher.HP] += row['HBP']*weight
-            recent_stats[pitcher.K] += row['SO']*weight
+            stats[pitcher.BF] += row['TBF']*weight
+            stats[pitcher.IP] += row['IP']*weight
+            stats[pitcher.HA] += row['H']*weight
+            stats[pitcher.HRA] += row['HR']*weight
+            stats[pitcher.BB] += row['BB']*weight
+            stats[pitcher.HP] += row['HBP']*weight
+            stats[pitcher.K] += row['SO']*weight
 
-    recent_stats[pitcher.AB] = recent_stats[pitcher.BF] - (recent_stats[pitcher.BB] + recent_stats[pitcher.HP])
-    recent_stats[pitcher.BA] = recent_stats[pitcher.HA]/recent_stats[pitcher.AB]
-    recent_stats[pitcher.OBP] = (recent_stats[pitcher.HA]+recent_stats[pitcher.BB]+recent_stats[pitcher.HP])/recent_stats[pitcher.BF]
-    recent_stats[pitcher.HRper] = recent_stats[pitcher.HRA]/recent_stats[pitcher.AB]
-    recent_stats[pitcher.Kper] = recent_stats[pitcher.K]/recent_stats[pitcher.BF]
-    recent_stats[pitcher.BBper] = recent_stats[pitcher.BB]/recent_stats[pitcher.BF]
+    stats[pitcher.AB] = stats[pitcher.BF] - (stats[pitcher.BB] + stats[pitcher.HP])
+    stats[pitcher.BA] = stats[pitcher.HA]/stats[pitcher.AB]
+    stats[pitcher.OBP] = (stats[pitcher.HA]+stats[pitcher.BB]+stats[pitcher.HP])/stats[pitcher.BF]
+    stats[pitcher.HRper] = stats[pitcher.HRA]/stats[pitcher.AB]
+    stats[pitcher.Kper] = stats[pitcher.K]/stats[pitcher.BF]
+    stats[pitcher.BBper] = stats[pitcher.BB]/stats[pitcher.BF]
 
     #Adjust for the number of games in the sample size
     for i in range(0,5):
-        stats[i] = ((max_index/max_games)*stats[i+8])+((1-(max_index/max_games))*pitcher_averages[i])
+        stats[i+8] = ((max_index/max_games)*stats[i+8])+((1-(max_index/max_games))*pitcher_averages[i])
 
     if debug == True:
-        print_array(recent_stats, "Overall Stats")
+        print_array(stats, "Overall Stats")
 
 #Run the program on a given file
 def run(filename):
