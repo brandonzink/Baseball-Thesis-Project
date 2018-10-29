@@ -4,9 +4,15 @@ import math
 import os
 
 #The debug mode varaible
-debug = True
+debug = False
 #Testing mode, used to test the weight function
 test_mode = True
+
+#The number of games back to test the model against
+games_back = 40
+
+#Correlation matrix, used if test_mode = true to test the correlation of a games back model
+corr_matrix = np.zeros((12, 1))
 
 #The MLB averages for 2018 the correspond to the second part of class batter (8-12)
 #BA, OBP, SLG, HR% (HR/ABs), K%, BB%
@@ -36,7 +42,7 @@ class batter:
 # Calculates the weight of the stats for a given game using an exponential method that
 # weights more recent games higher than older games, maxing at the number of games as an input
 def weight_calculator(game_number, max_games):
-    return (((4**(1./max_games))**((game_number*-1.)+max_games))-1)
+    return (((3.513**(1./max_games))**((game_number*-1.)+max_games))-1)
 
 #Reads a .csv into a pandas dataframe, delete the "Totals" row, drop the % on the BB% and K% columns, sort so newest first, reindex
 def read_data(filepath):
@@ -73,7 +79,7 @@ def print_array(array, title):
 
 def calc_stats(data):
 
-    max_games = 450
+    max_games = games_back
 
     stats = np.zeros((14, 1))  #The final array to be returned
     num_rows = len(data.index) #The number of rows in the dataframe
@@ -85,7 +91,7 @@ def calc_stats(data):
         recent_stats = np.zeros((14,1))
 
         #Loop through the data and calculate the weighted raw statistics for the most recent 10 games
-        for index, row in data.iterrows():
+        for index, row in data.head(10).iterrows():
             if index < 10: #Only consider the most recent 10 games to compare the rest of the data to
 
                 #Calculate the raw stats for the last 10 games
@@ -116,21 +122,26 @@ def calc_stats(data):
         max_index = min(max_games, num_rows) #The number of games, will max out at 50, reinstanced after the change in size
 
     #Loop through the data and calculate the weighted statistics using the weight_calulator function
-    for index, row in data.iterrows():
+    for index, row in data.head(games_back).iterrows():
+
+        #Used to calculate the unweighted AB
+        unweighted_BB = 0
+
         if index < max_index: 
 
             weight = weight_calculator(index, max_games)
 
-            #Calculate the raw stats for the last 450 games or less (if not enough data)
-            stats[batter.PA] += row['PA']*weight
+            #Calculate the raw stats for the last games_back games or less (if not enough data)
+            stats[batter.PA] += row['PA']
             stats[batter.H] += row['H']*weight
             stats[batter.DB_H] += row['2B']*weight
             stats[batter.TR_H] += row['3B']*weight
             stats[batter.HR] += row['HR']*weight
             stats[batter.BB] += row['BB%']*row['PA']*weight
+            unweighted_BB += row['BB%']*row['PA']
             stats[batter.K] += row['K%']*row['PA']*weight
 
-        stats[batter.AB] = stats[batter.PA]-stats[batter.BB]
+        stats[batter.AB] = stats[batter.PA]-unweighted_BB
         stats[batter.BA] = stats[batter.H]/stats[batter.AB]
         stats[batter.OBP] = (stats[batter.H]+stats[batter.BB])/stats[batter.PA]
         stats[batter.HRper] = stats[batter.HR]/stats[batter.AB]
@@ -145,15 +156,73 @@ def calc_stats(data):
     if debug == True:
         print_array(stats, "Overall Stats")
 
+    if test_mode == True:
+
+        global corr_matrix
+
+        temp_array = np.zeros((12, 1))
+
+        #Overll stats
+        temp_array[0][0] = stats[8]
+        temp_array[1][0] = stats[9]
+        temp_array[2][0] = stats[10]
+        temp_array[3][0] = stats[11]
+        temp_array[4][0] = stats[12]
+        temp_array[5][0] = stats[13]
+
+        #Two week stats
+        temp_array[6][0] = recent_stats[8]
+        temp_array[7][0] = recent_stats[9]
+        temp_array[8][0] = recent_stats[10]
+        temp_array[9][0] = recent_stats[11]
+        temp_array[10][0] = recent_stats[12]
+        temp_array[11][0] = recent_stats[13]
+
+        corr_matrix = np.concatenate((corr_matrix, temp_array), axis=1)
+
 #Run the program on a given file
 def run(filename):
     print("Running on", filename)
     calc_stats(read_data(filename))
+
+#Test the correlation of the corresponding varaibles given the number of games back
+def correlation_test(matrix):
+
+    #Calculate the coefficents
+    BA_coef = np.corrcoef(matrix[0], matrix[6])[0,1]
+    OBP_coef = np.corrcoef(matrix[1], matrix[7])[0,1]
+    SLG_coef = np.corrcoef(matrix[2], matrix[8])[0,1]
+    HRper_coef = np.corrcoef(matrix[3], matrix[9])[0,1]
+    K_coef = np.corrcoef(matrix[4], matrix[10])[0,1]
+    BB_coef = np.corrcoef(matrix[5], matrix[11])[0,1]
+    #Average coefficent
+    AVG_coef = np.mean([BA_coef, OBP_coef, SLG_coef, HRper_coef, K_coef, BB_coef])
+
+    #Print the values
+    print("\n")
+    print("BA coefficent:", round(BA_coef, 3))
+    print("OBP coefficent:",round(OBP_coef, 3))
+    print("SLG coefficent:", round(SLG_coef, 3))
+    print("HR% coefficent:", round(HRper_coef, 3))
+    print("K% coefficent:", round(K_coef, 3))
+    print("BB% coefficent:", round(BB_coef, 3))
+    print("\n")
+    print("Average coefficent:", round(AVG_coef, 3))
+    print("\n")
+
 
 #Loop through all of the pitcher files in the \Data\Pitchers dir
 def main():
     for root, dirs, files in os.walk(os.getcwd()+'\Data\Batters'):
        for fname in files:
            run('Data\Batters\\' + fname)
+
+    #Print the correlation matrix if debug is on
+    if test_mode == True and debug == True:
+
+        print(corr_matrix)
+
+    if test_mode == True:
+        correlation_test(corr_matrix)
 
 main()
