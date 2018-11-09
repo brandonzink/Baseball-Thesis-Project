@@ -2,21 +2,39 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import matplotlib.pyplot as plt
 
+#This varaible turns on and off the distribution graphs
+distr = False
 #The debug mode varaible
 debug = False
 #Testing mode, used to test the weight function
 test_mode = True
 
 #The number of games back to test the model against
-games_back = 40
+games_back = 100
+
+#The number of games to consider for the recenct stats in test mode
+recent_games_back = 10
 
 #Correlation matrix, used if test_mode = true to test the correlation of a games back model
 corr_matrix = np.zeros((12, 1))
 
+#Difference matricies, used as a part of the distrbution graphs
+diff_matrix_BA = []
+diff_matrix_OBP = []
+diff_matrix_SLG = []
+diff_matrix_HRper = []
+diff_matrix_Kper = []
+diff_matrix_BBper = []
+
 #The MLB averages for 2018 the correspond to the second part of class batter (8-12)
 #BA, OBP, SLG, HR% (HR/ABs), K%, BB%
-pitcher_averages = [0.248, 0.318, 0.409, 0.034, 0.223, 0.085]
+#batter_averages = [0.248, 0.318, 0.409, 0.034, 0.223, 0.085]
+
+#Testing statline for replacement level instead of league average, same as above
+#https://www.fangraphs.com/blogs/the-recent-examples-of-a-replacement-level-player/
+batter_averages = [0.223, 0.298, 0.365, 0.020, 0.207, 0.068]
 
 #This class is used to keep track of the data in the arrays
 class batter:
@@ -42,7 +60,8 @@ class batter:
 # Calculates the weight of the stats for a given game using an exponential method that
 # weights more recent games higher than older games, maxing at the number of games as an input
 def weight_calculator(game_number, max_games):
-    return (((3.513**(1./max_games))**((game_number*-1.)+max_games))-1)
+    #return (((3.513**(1./max_games))**((game_number*-1.)+max_games))-1)
+    return 1
 
 #Reads a .csv into a pandas dataframe, delete the "Totals" row, drop the % on the BB% and K% columns, sort so newest first, reindex
 def read_data(filepath):
@@ -91,7 +110,7 @@ def calc_stats(data):
         recent_stats = np.zeros((14,1))
 
         #Loop through the data and calculate the weighted raw statistics for the most recent 10 games
-        for index, row in data.head(10).iterrows():
+        for index, row in data.head(recent_games_back).iterrows():
             if index < 10: #Only consider the most recent 10 games to compare the rest of the data to
 
                 #Calculate the raw stats for the last 10 games
@@ -116,7 +135,7 @@ def calc_stats(data):
             print_array(recent_stats, "Most Recent 3 Games")
 
         #Delete the most recent 10 games, reset the index, recalculate the size statistics
-        data = data.iloc[10:]
+        data = data.iloc[recent_games_back:]
         data = data.reset_index(drop=True)
         num_rows = len(data.index) #The number of rows in the dataframe, reinstanced after the change in size
         max_index = min(max_games, num_rows) #The number of games, will max out at 50, reinstanced after the change in size
@@ -151,7 +170,7 @@ def calc_stats(data):
 
     #Adjust for the number of games in the sample size
     for i in range(0,6):
-        stats[i+8] = ((max_index/max_games)*stats[i+8])+((1-(max_index/max_games))*pitcher_averages[i])
+        stats[i+8] = ((max_index/max_games)*stats[i+8])+((1-(max_index/max_games))*batter_averages[i])
 
     if debug == True:
         print_array(stats, "Overall Stats")
@@ -180,6 +199,16 @@ def calc_stats(data):
 
         corr_matrix = np.concatenate((corr_matrix, temp_array), axis=1)
 
+    #Take the difference of the stats if the varaible is on
+    if distr == True:
+        diff_matrix_BA.append(stats[8]-recent_stats[8])
+        diff_matrix_OBP.append(stats[9]-recent_stats[9])
+        diff_matrix_SLG.append(stats[10]-recent_stats[10])
+        diff_matrix_HRper.append(stats[11]-recent_stats[11])
+        diff_matrix_Kper.append(stats[12]-recent_stats[12])
+        diff_matrix_BBper.append(stats[13]-recent_stats[13])
+
+
 #Run the program on a given file
 def run(filename):
     print("Running on", filename)
@@ -200,6 +229,8 @@ def correlation_test(matrix):
 
     #Print the values
     print("\n")
+    print("Games back:", games_back)
+    print("\n")
     print("BA coefficent:", round(BA_coef, 3))
     print("OBP coefficent:",round(OBP_coef, 3))
     print("SLG coefficent:", round(SLG_coef, 3))
@@ -210,6 +241,59 @@ def correlation_test(matrix):
     print("Average coefficent:", round(AVG_coef, 3))
     print("\n")
 
+#Graphs the difference distributions
+def print_distr_graphs(matrix):
+    plt.scatter(matrix[0], matrix[6])
+    plt.title('BA Distribution')
+    plt.xlabel('Recency Weighted BA')
+    plt.ylabel('Two Weeks BA')
+    plt.ylim(bottom=0.0)
+    plt.xlim(left=0.0)
+    plt.show()
+
+    plt.scatter(matrix[1], matrix[7])
+    plt.title('OBP Distribution')
+    plt.xlabel('Recency Weighted OBP')
+    plt.ylabel('Two Weeks OBP')
+    plt.ylim(bottom=0.00)
+    plt.xlim(left=0.00)
+    plt.show()
+
+    plt.scatter(matrix[2], matrix[8])
+    plt.title('SLG Distribution')
+    plt.xlabel('Recency Weighted SLG')
+    plt.ylabel('Two Weeks SLG')
+    plt.ylim(bottom=0.00)
+    plt.xlim(left=0.00)
+    plt.show()
+
+    plt.scatter(matrix[3], matrix[9])
+    plt.title('HR% Distribution')
+    plt.xlabel('Recency Weighted HR%')
+    plt.ylabel('Two Weeks HR%')
+    plt.ylim(bottom=0.00)
+    plt.xlim(left=0.00)
+    plt.show()
+
+    plt.scatter(matrix[4], matrix[10])
+    plt.title('K% Distribution')
+    plt.xlabel('Recency Weighted K%')
+    plt.ylabel('Two Weeks K%')
+    plt.ylim(bottom=0.00)
+    plt.xlim(left=0.00)
+    plt.show()
+
+    plt.scatter(matrix[5], matrix[11])
+    plt.title('BB% Distribution')
+    plt.xlabel('Recency Weighted BB%')
+    plt.ylabel('Two Weeks BB%')
+    plt.ylim(bottom=0.00)
+    plt.xlim(left=0.00)
+    plt.show()
+
+    #plt.hist(diff_matrix_BA, bins=20)
+    #plt.title('Difference in BA (Recency Model - Two Weeks)')
+    #plt.show()
 
 #Loop through all of the pitcher files in the \Data\Pitchers dir
 def main():
@@ -223,6 +307,12 @@ def main():
         print(corr_matrix)
 
     if test_mode == True:
+
         correlation_test(corr_matrix)
+        temp_matrix = np.transpose(corr_matrix)
+        np.savetxt("batter_stats.csv", temp_matrix, delimiter=',')
+
+    if distr == True:
+        print_distr_graphs(corr_matrix)
 
 main()

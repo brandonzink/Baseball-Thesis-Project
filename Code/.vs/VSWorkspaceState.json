@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Data",
-    "\\Data\\Pitchers"
+    "\\Data"
   ],
-  "SelectedNode": "\\Pitcher_Statistic_Model.py",
+  "SelectedNode": "\\Batter_Regression.py",
   "PreviewInSolutionExplorer": false
 }
