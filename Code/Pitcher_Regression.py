@@ -11,11 +11,11 @@ import statsmodels.formula.api as smf
 #Returns the dataframe and a list of the column headers for the ROS stats
 def import_data():
 
-    Two_wk_advanced = pd.read_csv("Data\\2wk_Advanced_Stats.csv")
-    Two_wk_batted = pd.read_csv("Data\\2wk_Batted_Ball.csv")
+    Two_wk_advanced = pd.read_csv("Data\\2wk_Advanced_Pitchers.csv")
+    Two_wk_batted = pd.read_csv("Data\\2wk_Batted_Ball_Pitchers.csv")
     
-    ROS_advanced = pd.read_csv("Data\\ROS_Advanced_Stats.csv")
-    ROS_batted = pd.read_csv("Data\\ROS_Batted_Ball.csv")
+    ROS_advanced = pd.read_csv("Data\\ROS_Advanced_Pitchers.csv")
+    ROS_batted = pd.read_csv("Data\\ROS_Batted_Ball_Pitchers.csv")
 
     Two_wk_advanced.columns = Two_wk_advanced.columns.str.replace(r"[%]", "per")
     Two_wk_batted.columns = Two_wk_batted.columns.str.replace(r"[%]", "per")
@@ -29,6 +29,12 @@ def import_data():
     ROS_advanced.columns = ROS_advanced.columns.str.replace(r"[/]", "per")
     ROS_batted.columns = ROS_batted.columns.str.replace(r"[/]", "per")
 
+    Two_wk_advanced.columns = Two_wk_advanced.columns.str.replace(r"[-]", "minus")
+    Two_wk_batted.columns = Two_wk_batted.columns.str.replace(r"[-]", "minus")
+
+    ROS_advanced.columns = ROS_advanced.columns.str.replace(r"[-]", "minus")
+    ROS_batted.columns = ROS_batted.columns.str.replace(r"[-]", "minus")
+
     Two_wk_cols_to_use = Two_wk_advanced.columns.difference(Two_wk_batted.columns)
     ROS_cols_to_use = ROS_advanced.columns.difference(ROS_batted.columns)
 
@@ -37,9 +43,9 @@ def import_data():
 
     columns = list(df_ROS)
 
-    batter_data = pd.merge(df_ROS, df_Two_wk, on='playerId', how='inner', suffixes=('','_two_wk'))
+    pitcher_data = pd.merge(df_ROS, df_Two_wk, on='playerId', how='inner', suffixes=('','_two_wk'))
 
-    return batter_data, columns
+    return pitcher_data, columns
 
 #Forward selecting linear regression model
 #Returns the model
@@ -77,17 +83,17 @@ def regression(data, columns, regressed_column, maxk):
     columns.remove('playerId')
     columns.remove('Name')
 
-    temp_batters = data[columns]
+    temp_pitchers = data[columns]
 
-    model = forward_select(temp_batters, regressed_column, maxk)
+    model = forward_select(temp_pitchers, regressed_column, maxk)
 
     print(model.summary())
 
 def main():
 
-    batter_data, columns = import_data()
+    pitcher_data, columns = import_data()
 
-    regression(batter_data, columns, 'SLG_two_wk', 5)
+    regression(pitcher_data, columns, 'HRperFB_two_wk', 5)
 
 
 main()
