@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 
 #This varaible turns on and off the distribution graphs
-distr = False
+distr = True
 #The debug mode varaible
 debug = False
 #Testing mode, used to test the weight function
@@ -18,7 +18,7 @@ games_back = 100
 recent_games_back = 10
 
 #Correlation matrix, used if test_mode = true to test the correlation of a games back model
-corr_matrix = np.zeros((12, 1))
+corr_matrix = np.empty((12, 1))
 
 #Difference matricies, used as a part of the distrbution graphs
 diff_matrix_BA = []
@@ -245,26 +245,26 @@ def correlation_test(matrix):
 def print_distr_graphs(matrix):
     plt.scatter(matrix[0], matrix[6])
     plt.title('BA Distribution')
-    plt.xlabel('Recency Weighted BA')
+    plt.xlabel('100 G BA')
     plt.ylabel('Two Weeks BA')
     plt.ylim(bottom=0.0)
-    plt.xlim(left=0.0)
+    plt.xlim(left=0.15)
     plt.show()
 
     plt.scatter(matrix[1], matrix[7])
     plt.title('OBP Distribution')
-    plt.xlabel('Recency Weighted OBP')
+    plt.xlabel('100 G OBP')
     plt.ylabel('Two Weeks OBP')
     plt.ylim(bottom=0.00)
-    plt.xlim(left=0.00)
+    plt.xlim(left=0.20)
     plt.show()
 
     plt.scatter(matrix[2], matrix[8])
     plt.title('SLG Distribution')
-    plt.xlabel('Recency Weighted SLG')
+    plt.xlabel('100 G SLG')
     plt.ylabel('Two Weeks SLG')
     plt.ylim(bottom=0.00)
-    plt.xlim(left=0.00)
+    plt.xlim(left=0.20)
     plt.show()
 
     plt.scatter(matrix[3], matrix[9])
@@ -277,7 +277,7 @@ def print_distr_graphs(matrix):
 
     plt.scatter(matrix[4], matrix[10])
     plt.title('K% Distribution')
-    plt.xlabel('Recency Weighted K%')
+    plt.xlabel('100 G K%')
     plt.ylabel('Two Weeks K%')
     plt.ylim(bottom=0.00)
     plt.xlim(left=0.00)
@@ -285,7 +285,7 @@ def print_distr_graphs(matrix):
 
     plt.scatter(matrix[5], matrix[11])
     plt.title('BB% Distribution')
-    plt.xlabel('Recency Weighted BB%')
+    plt.xlabel('100 G BB%')
     plt.ylabel('Two Weeks BB%')
     plt.ylim(bottom=0.00)
     plt.xlim(left=0.00)
@@ -297,9 +297,9 @@ def print_distr_graphs(matrix):
 
 #Loop through all of the pitcher files in the \Data\Pitchers dir
 def main():
-    for root, dirs, files in os.walk(os.getcwd()+'\Data\Batters'):
+    for root, dirs, files in os.walk(os.getcwd()+'\Player_Logs_Data\Batters'):
        for fname in files:
-           run('Data\Batters\\' + fname)
+           run('Player_Logs_Data\Batters\\' + fname)
 
     #Print the correlation matrix if debug is on
     if test_mode == True and debug == True:
