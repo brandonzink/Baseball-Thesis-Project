@@ -17,6 +17,9 @@ def import_data():
     ROS_advanced = pd.read_csv("Data\\ROS_Advanced_Pitchers.csv")
     ROS_batted = pd.read_csv("Data\\ROS_Batted_Ball_Pitchers.csv")
 
+    Pitcher_Against = pd.read_csv("Data\\PitcherAgainst.csv")
+    Pitcher_Against = Pitcher_Against[['Name', 'SLG','OBP']]
+
     Two_wk_advanced.columns = Two_wk_advanced.columns.str.replace(r"[%]", "per")
     Two_wk_batted.columns = Two_wk_batted.columns.str.replace(r"[%]", "per")
 
@@ -43,7 +46,8 @@ def import_data():
 
     columns = list(df_ROS)
 
-    pitcher_data = pd.merge(df_ROS, df_Two_wk, on='playerId', how='inner', suffixes=('','_two_wk'))
+    pitcher_data_temp = pd.merge(df_ROS, df_Two_wk, on='playerId', how='inner', suffixes=('','_two_wk'))
+    pitcher_data = pd.merge(pitcher_data_temp, Pitcher_Against, on='Name', how='inner')
 
     return pitcher_data, columns
 
@@ -93,7 +97,7 @@ def main():
 
     pitcher_data, columns = import_data()
 
-    regression(pitcher_data, columns, 'HRperFB_two_wk', 5)
+    regression(pitcher_data, columns, 'HRper9_two_wk', 5)
 
 
 main()

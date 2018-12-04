@@ -87,7 +87,7 @@ def main():
 
     batter_data, columns = import_data()
 
-    regression(batter_data, columns, 'Kper_two_wk', 5)
+    regression(batter_data, columns, 'BBper_two_wk', 5)
 
 
 
