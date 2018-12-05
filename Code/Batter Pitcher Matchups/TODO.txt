@@ -1,0 +1,6 @@
+1. Parse the events .csv files into one dataframe
+2. Clean up the duplicates in the pitcher stats (using keep='first' in Pandas drop_duplicates()
+3. Turn the batter and pitcher stats into lookup tables (store these to read them back in more quickly)
+4. Take out only the data that I need from the events file (store this to read it back in more quickly)
+5. Figure out the playerids
+6. Run through and calculate the expected outcome for each matchup and combine the needed information into one dataframe
