@@ -50,8 +50,36 @@ def calculate_expected_values(data):
     data['dBBper'] = data['eBBper'] - data['BBper']
     data['dKper'] = data['eKper'] - data['Kper']
 
+    #All of the possible interaction terms for the regression (yeah there's a shit ton) Pitcher-Batter
+    data['pbAVG'] = data['pAVG']-data['bAVG']
+    data['pbOBP'] = data['pOBP']-data['bOBP']
+    data['pbSLG'] = data['pSLG']-data['bSLG']
+    data['pbBBper'] = data['pBBper']-data['bBBper']
+    data['pbKper'] = data['pKper']-data['bKper']
+
+    data['pbAVG_x_pbAVG'] = data['pbAVG']*data['pbAVG']
+    data['pbAVG_x_pbOBP'] = data['pbAVG']*data['pbOBP']
+    data['pbAVG_x_pbSLG'] = data['pbAVG']*data['pbSLG']
+    data['pbAVG_x_pbBBper'] = data['pbAVG']*data['pbBBper']
+    data['pbAVG_x_pbKper'] = data['pbAVG']*data['pbKper']
+    
+    data['pbOBP_x_pbOBP'] = data['pbOBP']*data['pbOBP']
+    data['pbOBP_x_pbSLG'] = data['pbOBP']*data['pbSLG']
+    data['pbOBP_x_pbBBper'] = data['pbOBP']*data['pbBBper']
+    data['pbOBP_x_pbKper'] = data['pbOBP']*data['pbKper']
+
+    data['pbSLG_x_pbSLG'] = data['pbSLG']*data['pbSLG']
+    data['pbSLG_x_pbBBper'] = data['pbSLG']*data['pbBBper']
+    data['pbSLG_x_pbKper'] = data['pbSLG']*data['pbKper']
+
+    data['pbBBper_x_pbBBper'] = data['pbBBper']*data['pbBBper']
+    data['pbBBper_x_pbKper'] = data['pbBBper']*data['pbKper']
+
+    data['pbKper_x_pbKper'] = data['pbKper']*data['pbKper']
+
+
     #Select the columns we want and return the dataframe
-    return data[['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper', 'dAVG', 'dOBP', 'dSLG', 'dBBper', 'dKper']]
+    return data[['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper', 'pbAVG_x_pbAVG', 'pbAVG_x_pbOBP', 'pbAVG_x_pbSLG', 'pbAVG_x_pbBBper', 'pbAVG_x_pbKper', 'pbOBP_x_pbOBP', 'pbOBP_x_pbSLG', 'pbOBP_x_pbBBper', 'pbOBP_x_pbKper', 'pbSLG_x_pbSLG', 'pbSLG_x_pbBBper','pbSLG_x_pbKper', 'pbBBper_x_pbBBper', 'pbBBper_x_pbKper', 'pbKper_x_pbKper', 'dAVG', 'dOBP', 'dSLG', 'dBBper', 'dKper']]
 
 
 #Uses the Odds Ratio MEthod to calculate the expected outcome
@@ -92,13 +120,13 @@ def forward_select(df, resp_str , maxk):
 
 def run_regression_base(data, reg_column):
 
-    columns = ['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper']
+    columns = ['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper', 'pbAVG_x_pbAVG', 'pbAVG_x_pbOBP', 'pbAVG_x_pbSLG', 'pbAVG_x_pbBBper', 'pbAVG_x_pbKper', 'pbOBP_x_pbOBP', 'pbOBP_x_pbSLG', 'pbOBP_x_pbBBper', 'pbOBP_x_pbKper', 'pbSLG_x_pbSLG', 'pbSLG_x_pbBBper','pbSLG_x_pbKper', 'pbBBper_x_pbBBper', 'pbBBper_x_pbKper', 'pbKper_x_pbKper']
 
     columns.append(reg_column)
 
     temp_data = data[columns]
 
-    model = forward_select(temp_data, reg_column, 4)
+    model = forward_select(temp_data, reg_column, 5)
 
     print(model.summary())
 
@@ -109,7 +137,13 @@ def main():
 
     data = calculate_expected_values(data)
 
-    run_regression_base(data, 'dBBper')
+    #run_regression_base(data, 'dKper')
+
+    print(data['dAVG'].mean())
+    print(data['dOBP'].mean())
+    print(data['dSLG'].mean())
+    print(data['dBBper'].mean())
+    print(data['dKper'].mean())
 
 
 main()
