@@ -86,8 +86,10 @@ def combine_data(events, pitchers, batters):
 
     events = events.merge(pitchers, on='pID', how='left')
     events = events.merge(batters, on='bID', how='left')
+    events = events.groupby(['pID', 'bID']).mean()
 
     events = events[['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper', 'AVG', 'OBP', 'SLG', 'BBper', 'Kper']]
+    events = events.dropna(axis='rows')
 
     return events
 
