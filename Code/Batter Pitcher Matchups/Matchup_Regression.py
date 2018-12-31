@@ -8,6 +8,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import PolynomialFeatures
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
+import math
 
 
 #Normalizes each column in a dataframe input
@@ -24,8 +25,8 @@ def read_in_data():
 
     data = pd.read_csv("Data\\events_with_stats.csv")
     data = data.dropna(axis="rows")
-    data = data.drop('pID', 1)
-    data = data.drop('bID', 1)
+    #data = data.drop('pID', 1)
+    #data = data.drop('bID', 1)
 
     return data
 
@@ -94,7 +95,7 @@ def odds_ratio_method(b_stat, p_stat, mlb_avg):
     return rate
 
 #Forward selecting linear regression model, returns the model
-def forward_select(df, resp_str , maxk):
+def forward_select_weighted(df, resp_str , maxk, counts):
     
     remaining = set(df.columns)
     remaining.remove(resp_str)
@@ -105,7 +106,7 @@ def forward_select(df, resp_str , maxk):
         score_array = []
         for candidate in remaining:
             formula = "{} ~ {} + 1".format(resp_str,' + '.join(selected + [candidate]))
-            score = smf.ols(formula, df).fit().rsquared_adj
+            score = smf.wls(formula, df, weights=counts).fit().rsquared_adj
             score_array.append((score, candidate))
         score_array.sort()
         score_new, best_option = score_array.pop()
@@ -118,7 +119,7 @@ def forward_select(df, resp_str , maxk):
     model = smf.ols(formula, df).fit()
     return model
 
-def run_regression_base(data, reg_column):
+def run_regression_base(data, reg_column, counts):
 
     columns = ['pAVG', 'pOBP', 'pSLG', 'pBBper', 'pKper', 'bAVG', 'bOBP', 'bSLG', 'bBBper', 'bKper', 'pbAVG_x_pbAVG', 'pbAVG_x_pbOBP', 'pbAVG_x_pbSLG', 'pbAVG_x_pbBBper', 'pbAVG_x_pbKper', 'pbOBP_x_pbOBP', 'pbOBP_x_pbSLG', 'pbOBP_x_pbBBper', 'pbOBP_x_pbKper', 'pbSLG_x_pbSLG', 'pbSLG_x_pbBBper','pbSLG_x_pbKper', 'pbBBper_x_pbBBper', 'pbBBper_x_pbKper', 'pbKper_x_pbKper']
 
@@ -126,24 +127,48 @@ def run_regression_base(data, reg_column):
 
     temp_data = data[columns]
 
-    model = forward_select(temp_data, reg_column, 5)
+    model = forward_select_weighted(temp_data, reg_column, 5, counts)
 
     print(model.summary())
 
+#Calculates the binomail probability of an event
+def calculate_binom_prob(N, k, p):
+    return (math.factorial(N)/(math.factorial(k)*math.factorial(N-k)))*(p**k)*((1-p)**(N-k))
+
+def print_probabilities(data):
+
+    print(data['AVG']*data['count'])
+    
+    bin_AVG = calculate_binom_prob(data['count'], int(round(data['AVG']*data['count'])), data['eAVG'])
+    bin_OBP = calculate_binom_prob(data['count'], int(data['OBP']*data['count']), data['eOBP'])
+    bin_SLG = calculate_binom_prob(data['count'], int(data['SLG']*data['count']), data['eSLG'])
+    bin_Kper = calculate_binom_prob(data['count'], int(data['Kper']*data['count']), data['eKper'])
+    bin_BBper = calculate_binom_prob(data['count'], int(data['BBper']*data['count']), data['eBBper'])
+
+    print("Mean AVG Prob.:", bin_AVG.mean())
+    print("Mean OBP Prob.:", bin_OBP.mean())
+    print("Mean SLG Prob.:", bin_SLG.mean())
+    print("Mean Kper Prob.:", bin_Kper.mean())
+    print("Mean BBper Prob.:", bin_BBper.mean())
 
 def main():
 
     data = read_in_data()
 
-    data = calculate_expected_values(data)
+    data_sub_counts = calculate_expected_values(data)
 
-    #run_regression_base(data, 'dKper')
+    #data = data.dropna(axis='rows')
 
-    print(data['dAVG'].mean())
-    print(data['dOBP'].mean())
-    print(data['dSLG'].mean())
-    print(data['dBBper'].mean())
-    print(data['dKper'].mean())
+    run_regression_base(data_sub_counts, 'dBBper', data['count'])
+
+    #print_probabilities(data)
+
+    #print(np.average(data['dAVG'], weights=data['count']))
+    #print(np.average(data['dOBP'], weights=data['count']))
+    #print(np.average(data['dSLG'], weights=data['count']))
+    #print(np.average(data['dBBper'], weights=data['count']))
+    #print(np.average(data['dKper'], weights=data['count']))
+
 
 
 main()

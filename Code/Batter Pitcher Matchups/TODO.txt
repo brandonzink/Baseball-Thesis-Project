@@ -1,6 +1,3 @@
-1. Parse the events .csv files into one dataframe
-2. Clean up the duplicates in the pitcher stats (using keep='first' in Pandas drop_duplicates()
-3. Turn the batter and pitcher stats into lookup tables (store these to read them back in more quickly)
-4. Take out only the data that I need from the events file (store this to read it back in more quickly)
-5. Figure out the playerids
-6. Run through and calculate the expected outcome for each matchup and combine the needed information into one dataframe
+1. Find a way to have the group by matchup in the dataframe also include sample size (PA)
+2. Change the regression to a weighted regression based on PA
+3. Take a weighted mean difference for expected/observed or a probabalistic model (probability of a weighted coin coming up heads kinda thing)
