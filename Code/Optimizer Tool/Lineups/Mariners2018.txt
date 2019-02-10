@@ -1,0 +1,10 @@
+Name,Pos,AVG,OBP,SLG,BB%,K%
+Mitch Haniger,RF, .285, .366, .493, .102, .217
+Jean Segura,SS, .304, .341, .415, .051, .109
+Kyle Seager,3B, .221, .273, .400, .060, .219
+Nelson Cruz,DH, .256, .342, .509, .093, .206
+Dee Gordon,2B, .268, .288, .349, .015, .136
+Ryon Healy,1B, .235, .277, .412, .052, .216
+Mike Zunino,C, .201, .259, .410, .059, .370
+Guillermo Heredia,CF, .236, .318, .342, .095, .154 
+Denard Span,LF, .272, .329, .435, .070, .168
