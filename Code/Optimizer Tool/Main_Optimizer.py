@@ -4,14 +4,21 @@ import sys
 import Stat_Prediction_Applied
 import Batter_Pitcher_Matchup_Applied
 
-test = True #If in testing mode
-ranking_method = 'MLB' #The ranking method, either Team or MLB for stat rankings
+test = False #If in testing mode, prints more stuff
+
+"""
+The players can either be ranked based on where they rank as compared to their
+teammates (in tiers of 1-2-3-2-1), or based on where they rank in the MLB as a whole
+(in tiers of 30-60-90-60-30). The cutoffs for the simulations were based on the MLB
+cutoffs, both will be tested to see which is more accurate. 
+"""
+ranking_method = 'MLB' #Either Team or MLB for stat rankings
 
 #Hold the batting stat/position results from the simulations
 normalized_results_al = np.zeros((45, 5))
 normalized_results_nl = np.zeros((45, 5))
 
-#Fills the normalized results arrays as defined above
+#Fills the normalized results arrays as defined above from the simulations
 def fill_normalized_results():
 
 	global normalized_results_al
@@ -28,7 +35,8 @@ def fill_normalized_results():
 		print(normalized_results_nl)
 
 
-#Gets the weight for the given spot based on the input
+#Gets the weight for the given stat, league, and position in the batting
+#order. Will return a value between 0 and 100 inclusive.
 def get_weight(league, spot, rank, stat):
 
 	def get_stat(stat):
@@ -58,8 +66,6 @@ def get_weight(league, spot, rank, stat):
 	if league == 'NL':
 		return normalized_results_nl[((spot-1)*5)+get_rank(rank)][get_stat(stat)]
 
-
-
 	if league == 'AL':
 		return normalized_results_al[((spot-1)*5)+get_rank(rank)][get_stat(stat)]
 
@@ -67,17 +73,26 @@ def get_weight(league, spot, rank, stat):
 #Does the actual scoring of the lineup
 def score_lineup(filename, league):
 
-	#The order of importance of the position in the batting order fr each league
+	#The order of importance of the position in the batting order for each league
+	#as found via the 'Mike Trout' simulation
 	#Ex. the fifth spot is the most important in the AL
 	al_pos_ranks = [5, 3, 2, 1, 6, 7, 4, 8, 9]
 	nl_pos_ranks = [1, 4, 2, 3, 5, 6, 8, 7, 9]
 
+	#Holds the final optimized lineup to be printed from
 	final_lineup = []
 
+	#Applies the stat prediction equations from the writeup
 	lineup = Stat_Prediction_Applied.predictive_data(filename)
-	print(lineup)
+	if test == True:
+		print("Post Stat_Prediction_Applied, Pre Batter_Pitcher_Matchup_Applied")
+		print(lineup)
+
+	#Applies the batter pitcher matchup equations from the writeup
 	lineup = Batter_Pitcher_Matchup_Applied.batter_pitcher_matchup(lineup)
-	print(lineup)
+	if test == True:
+		print("Post Batter_Pitcher_Matchup_Applied")
+		print(lineup)
 
 
 	#Creats ranks columns in the dataframe
@@ -110,11 +125,11 @@ def score_lineup(filename, league):
 
 		#Returns the rank based on where they rank within the MLB
 		if ranking_method == 'MLB':
-			AVG_cutoffs = [.296, .272, .251, .238]
-			OBP_cutoffs = [.374, .345, .322, .307]
-			SLG_cutoffs = [.512, .460, .414, .384]
-			BB_cutoffs = [0.134, 0.105, 0.084, 0.071]
-			K_cutoffs = [0.189, 0.216, 0.253, 0.304]
+			AVG_cutoffs = Batter_Pitcher_Matchup_Applied.batting_tiers_pitchers_matchup([.296, .272, .251, .238], 'AVG')
+			OBP_cutoffs = Batter_Pitcher_Matchup_Applied.batting_tiers_pitchers_matchup([.374, .345, .322, .307], 'OBP')
+			SLG_cutoffs = Batter_Pitcher_Matchup_Applied.batting_tiers_pitchers_matchup([.512, .460, .414, .384], 'SLG')
+			BB_cutoffs = Batter_Pitcher_Matchup_Applied.batting_tiers_pitchers_matchup([0.134, 0.105, 0.084, 0.071], 'BB%')
+			K_cutoffs = Batter_Pitcher_Matchup_Applied.batting_tiers_pitchers_matchup([0.189, 0.216, 0.253, 0.304], 'K%')
 
 			if stat == 'AVG':
 				cutoffs = AVG_cutoffs
@@ -166,9 +181,6 @@ def score_lineup(filename, league):
 		print("Score Matrix")
 		print(scores)
 
-			
-
-
 	if league == 'AL':
 		rankings = al_pos_ranks.copy()
 	if league == 'NL':
@@ -187,12 +199,13 @@ def score_lineup(filename, league):
 
 		#Get the max pos for the spot in the order we are looking for
 		max_pos = max_pos_array[rankings[0]-1]
-		print(max_pos)
+		if test == True:
+			print(max_pos)
 
 		if test == True:
 			print("Spot:", rankings[0], ", Player:", lineup.iloc[max_pos]['Name'])
 
-		final_lineup.append((rankings[0],". ", lineup.iloc[max_pos]['Name']))
+		final_lineup.append((rankings[0], lineup.iloc[max_pos]['Name'], lineup.iloc[max_pos]['AVG'], lineup.iloc[max_pos]['OBP'], lineup.iloc[max_pos]['SLG'], (lineup.iloc[max_pos]['BB%']*100), (lineup.iloc[max_pos]['K%']*100)))
 
 		lineup = lineup[lineup['Name'] != lineup.iloc[max_pos]['Name']]
 		rankings.pop(0)
@@ -209,9 +222,7 @@ def score_lineup(filename, league):
 
 	#Prints the lineup
 	for player in final_lineup:
-		print(str(player[0])+".", player[2])
-
-
+		print(str(player[0])+".", player[1],"-", str(round(player[2],3))+"/"+str(round(player[3],3))+"/"+str(round(player[4],3)),str(round(player[5],1))+"%", str(round(player[6],1))+"%")
 
 
 #Runs the functions
