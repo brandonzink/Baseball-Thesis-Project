@@ -1,0 +1,1 @@
+Make the cutoofs in ranking_method = MLB also change with the opposing pitcher
