@@ -47,7 +47,7 @@ def batter_pitcher_matchup(input_data):
 
 	#Players with an abnormally low BB% (pitchers, especially) can end up with a negative
 	#value when facing good pitchers. This sets all negative values to 0
-	output_data['BB%'] = output_data['BB%'].clip_lower(0.00)
+	output_data['BB%'] = output_data['BB%'].clip(lower=0.00)
 
 	return output_data
 
